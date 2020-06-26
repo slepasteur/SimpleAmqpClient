@@ -86,9 +86,10 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
   static ptr_t Create(const std::string &host = "127.0.0.1", int port = 5672,
                       const std::string &username = "guest",
                       const std::string &password = "guest",
-                      const std::string &vhost = "/", int frame_max = 131072) {
+                      const std::string &vhost = "/", int frame_max = 131072,
+                      int heartbeat = 0) {
     return boost::make_shared<Channel>(host, port, username, password, vhost,
-                                       frame_max, false);
+                                       frame_max, false, heartbeat);
   }
 
   /**
@@ -110,9 +111,10 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
     */
   static ptr_t CreateSaslExternal(const std::string &host = "127.0.0.1", int port = 5672,
                       const std::string &identity = "guest",
-                      const std::string &vhost = "/", int frame_max = 131072) {
+                      const std::string &vhost = "/", int frame_max = 131072,
+                      int heartbeat = 0) {
     return boost::make_shared<Channel>(host, port, identity, "", vhost,
-                                       frame_max, true);
+                                       frame_max, true, heartbeat);
   }
 
  protected:
@@ -158,11 +160,12 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
                             const std::string &password = "guest",
                             const std::string &vhost = "/",
                             int frame_max = 131072,
-                            bool verify_hostname_and_peer = true) {
+                            bool verify_hostname_and_peer = true,
+                            int heartbeat = 0) {
     return CreateSecure(path_to_ca_cert, host, path_to_client_key,
                         path_to_client_cert, port, username, password, vhost,
                         frame_max, verify_hostname_and_peer,
-                        verify_hostname_and_peer);
+                        verify_hostname_and_peer, heartbeat);
   }
 
   /**
@@ -197,7 +200,8 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
                             const std::string &username,
                             const std::string &password,
                             const std::string &vhost, int frame_max,
-                            bool verify_hostname, bool verify_peer) {
+                            bool verify_hostname, bool verify_peer,
+                            int heartbeat = 0) {
     SSLConnectionParams ssl_params;
     ssl_params.path_to_ca_cert = path_to_ca_cert;
     ssl_params.path_to_client_key = path_to_client_key;
@@ -206,7 +210,7 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
     ssl_params.verify_peer = verify_peer;
 
     return boost::make_shared<Channel>(host, port, username, password, vhost,
-                                       frame_max, ssl_params, false);
+                                       frame_max, ssl_params, false, heartbeat);
   }
 
   /**
@@ -230,16 +234,19 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
   * opening the SSL connection.
   * @param verify_peer Verify the certificate chain that is sent by the broker
   * when opening the SSL connection.
+  * @param heartbeat The number of seconds between heartbeat frame to
+  * request of the broker. A value of 0 disables heartbeats.
   *
   * @return a new Channel object pointer
   */
   static ptr_t CreateSecureSaslExternal(const std::string &path_to_ca_cert,
-                            const std::string &host,
-                            const std::string &path_to_client_key,
-                            const std::string &path_to_client_cert, int port,
-                            const std::string &identity,
-                            const std::string &vhost, int frame_max,
-                            bool verify_hostname, bool verify_peer) {
+                                        const std::string &host,
+                                        const std::string &path_to_client_key,
+                                        const std::string &path_to_client_cert,
+                                        int port, const std::string &identity,
+                                        const std::string &vhost, int frame_max,
+                                        bool verify_hostname, bool verify_peer,
+                                        int heartbeat = 0) {
     SSLConnectionParams ssl_params;
     ssl_params.path_to_ca_cert = path_to_ca_cert;
     ssl_params.path_to_client_key = path_to_client_key;
@@ -248,7 +255,7 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
     ssl_params.verify_peer = verify_peer;
 
     return boost::make_shared<Channel>(host, port, identity, "", vhost,
-                                       frame_max, ssl_params, true);
+                                       frame_max, ssl_params, true, heartbeat);
   }
 
   /**
@@ -287,12 +294,14 @@ class SIMPLEAMQPCLIENT_EXPORT Channel : boost::noncopyable {
 
   explicit Channel(const std::string &host, int port,
                    const std::string &username, const std::string &password,
-                   const std::string &vhost, int frame_max, bool sasl_external);
+                   const std::string &vhost, int frame_max, bool sasl_external,
+                   int heartbeat);
 
   explicit Channel(const std::string &host, int port,
                    const std::string &username, const std::string &password,
                    const std::string &vhost, int frame_max,
-                   const SSLConnectionParams &ssl_params, bool sasl_external);
+                   const SSLConnectionParams &ssl_params, bool sasl_external,
+                   int heartbeat);
 
  public:
   virtual ~Channel();
